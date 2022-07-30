@@ -79,7 +79,8 @@ class DoctypeReporter(xml.sax.handler.ErrorHandler):
         self.omitPublic = True        
 
     def comment(self, comment):
-        self.writer._write('<!--%s-->' % comment)
+        if self.writer:
+            self.writer._write('<!--%s-->' % comment)
 
     def startDTD(self, name, publicID, systemID):
         #configure overrides
@@ -98,30 +99,34 @@ class DoctypeReporter(xml.sax.handler.ErrorHandler):
             self.doctype = Doctype(name, publicID, systemID)
 
     def endDTD(self):
-        if self.doctype:
+        if self.doctype and self.writer:
             self.writer._write(self.doctype.asDeclaration())
 
     def startCDATA(self):
-        self.writer._write('<![CDATA[')
+        if self.writer:
+            self.writer._write('<![CDATA[')
 
     def endCDATA(self):
-        self.writer._write(']]>')
+        if self.writer:
+            self.writer._write(']]>')
 
     def report(self, uri):
+        s = "<report uri='%s'>" % uri
+        for err in self.errors:
+            s += '<error>%s</error>' % format(err)
         if self.doctype:
-            sys.stderr.write(self.doctype.asXML(uri))
+            s += self.doctype.asXML(uri)
+        s += '</report>'
+        return s
 
     def fatalError(self, e):
         self.errors.append(e)
-        raise e
 
     def error(self, e):
-        sys.stderr.write('[ERROR]:%s:%d:%d:%s' % \
-            (e.getSystemId(),e.getLineNumber(),e.getColumnNumber(),e.getMessage()))            
+        self.errors.append(e)
 
     def warning(self, e):
-        sys.stderr.write('[WARNING]:%s:%d:%d:%s' % \
-            (e.getSystemId(),e.getLineNumber(),e.getColumnNumber(),e.getMessage()))                        
+        self.errors.append(e)
 
 class DoctypeTool():
 
@@ -130,8 +135,9 @@ class DoctypeTool():
     OPTION_SET_PUBLIC_ID = '-p'
     OPTION_DROP_SYSTEM_ID = '-S'
     OPTION_DROP_PUBLIC_ID = '-P'
+    OPTION_QUIET = '-q'
     OPTION_SET_ROOT = '-r'
-    OPTIONS = 'hPp:r:Ss:'
+    OPTIONS = 'hPp:qr:Ss:'
 
     def __init__(self, args=sys.argv):
         self.system = None
@@ -139,10 +145,13 @@ class DoctypeTool():
         self.omitPublic = False
         self.omitSystem = False
         self.root = None
+        self.quiet = False
         self.file = None
         self.parseCommandLine(args)
 
-        writer = xml.sax.saxutils.XMLGenerator(encoding='utf-8')
+        writer = None
+        if not self.quiet:
+            writer = xml.sax.saxutils.XMLGenerator(encoding='utf-8')
         dr = DoctypeReporter(writer)
         dr.setPublicID(self.public)
         dr.setSystemID(self.system)
@@ -154,13 +163,15 @@ class DoctypeTool():
             dr.setRoot(self.root)
         parser = xml.sax.make_parser()
         parser.setProperty(xml.sax.handler.property_lexical_handler, dr)
-        parser.setContentHandler(writer)
+        if not self.quiet:
+            parser.setContentHandler(writer)
         parser.setErrorHandler(dr)
         
         try:
             parser.parse(self.file)
+            sys.stderr.write(dr.report(self.file))
         except Exception as err:
-            dr.report(self.file)  #option to report even after fatal error  
+            sys.stderr.write(format(err))  #option to report even after fatal error  
             sys.exit(-1)
 
     def usage(self):
@@ -171,6 +182,7 @@ where options are:
     -h print this message to the console
     -P omit public identifier
     -p <value> specify public identifier with <value>
+    -q do not emit the document passed in
     -r <value> specify root element named <value>
     -S omit system and public identifiers
     -s <value> specify system identifier with <value>""")
@@ -187,7 +199,7 @@ where options are:
         try:
             opts, args = getopt.getopt(args[1:], self.OPTIONS)
         except getopt.GetoptError as err:
-            self.fatal(err)
+            self.fatal(format(err))
 
         for o, a in opts:
             if o == self.OPTION_HELP:
@@ -203,6 +215,8 @@ where options are:
                 self.root = a
             elif o == self.OPTION_DROP_SYSTEM_ID:
                 self.omitSystem = True
+            elif o == self.OPTION_QUIET:
+                self.quiet = True
 
         if self.public and self.omitPublic:
             self.fatal('only one of -p or -P allowed')
