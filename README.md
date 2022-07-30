@@ -119,4 +119,4 @@ Arguments containing spaces must be escaped in the usual way at the command line
 N.B. If the `DOCTYPE` declaration is amended by the options specified, then the resulting report features the _updated_ values, rather than those found in the original document.
 
 ## IMPORTANT 
-*The application makes no attempt to check whether values passed in would result in well-formed output.*
+*The application makes no attempt to check whether values passed in would result in well-formed output. Non-well-formed input will be emitted as non-well-formed output.*
