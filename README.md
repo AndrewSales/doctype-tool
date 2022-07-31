@@ -16,6 +16,8 @@ The synopsis below should appear.
 ## Windows executables
 On Windows, executables are also provided, built using [pyinstaller](https://pyinstaller.org/): see `dist/doctype/` and `dist/standalone`.
 
+You can use these without needing to install python.
+
 To use the former, you must copy the entire contents of the directory. The standalone version can be used on its own, but will be [slower to start](https://pyinstaller.org/en/stable/operating-mode.html#how-the-one-file-program-works).
 
 In either case, invoke `doctype.exe` and the synopsis should appear.
@@ -36,4 +38,4 @@ where options are:
 ```
 
 # Usage
-See [the wiki](https://github.com/AndrewSales/doctype-tool/wiki) for details.
+See [the wiki](https://github.com/AndrewSales/doctype-tool/wiki/Getting-started) for details.
