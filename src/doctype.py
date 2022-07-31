@@ -28,19 +28,18 @@ class Doctype():
             ids = ' SYSTEM "%s"' % self.systemID            
         return '<!DOCTYPE %s%s>' % (self.root, ids)
 
-    def asXML(self, uri):
+    def asXML(self):
         """
         Return the DOCTYPE as a serialized XML document of the format:
         
-        <doctype uri='...' root='...' systemID='...' publicID='...'/>
+        <doctype root='...' systemID='...' publicID='...'/>
 
         where:
-        @uri is the URI of the document whose DOCTYPE is requested
         @root is the declared root element name
         @systemID is the SYSTEM identifier
         @publicID is the PUBLIC identifier.
         """
-        s = "<doctype uri='%s' root='%s'" % (uri,self.root)
+        s = "<doctype root='%s'" % (self.root)
         if self.publicID:
             s += " systemID='%s' publicID='%s'" % (self.systemID, self.publicID)
         elif self.systemID:
@@ -115,7 +114,7 @@ class DoctypeReporter(xml.sax.handler.ErrorHandler):
         for err in self.errors:
             s += '<error>%s</error>' % format(err)
         if self.doctype:
-            s += self.doctype.asXML(uri)
+            s += self.doctype.asXML()
         s += '</report>'
         return s
 
@@ -140,6 +139,7 @@ class DoctypeTool():
     OPTIONS = 'hPp:qr:Ss:'
 
     def __init__(self, args=sys.argv):
+        sys.stdout.reconfigure(encoding='utf-8')    #else redirecting to file results in encoding error
         self.system = None
         self.public = None
         self.omitPublic = False
@@ -170,14 +170,14 @@ class DoctypeTool():
         try:
             parser.parse(self.file)
             sys.stderr.write(dr.report(self.file))
-        except Exception as err:
+        except xml.sax.SAXParseException as err:
             sys.stderr.write(format(err))  #option to report even after fatal error  
             sys.exit(-1)
 
     def usage(self):
         print("""<!DoctypeTool> - a tool to report and amend XML 1.0 DOCTYPE declarations
 
-Syntax: DoctypeTool <options> file
+Syntax: doctype <options> file
 where options are:
     -h print this message to the console
     -P omit public identifier
