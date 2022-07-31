@@ -38,4 +38,4 @@ where options are:
 ```
 
 # Usage
-See [the wiki](https://github.com/AndrewSales/doctype-tool/wiki) for details.
+See [the wiki](https://github.com/AndrewSales/doctype-tool/wiki/Getting-started) for details.
