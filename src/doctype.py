@@ -170,16 +170,19 @@ class DoctypeTool():
         try:
             parser.parse(self.file)
             sys.stderr.write(dr.report(self.file))
-        except xml.sax.SAXParseException as err:
-            sys.stderr.write(format(err))  #option to report even after fatal error  
+        # except xml.sax.SAXParseException as err:
+        #     sys.stderr.write(format(err))  #option to report even after fatal error  
+        #     sys.exit(-1)
+        except Exception as err:
+            sys.stderr.write('[FATAL]:' + format(err))
             sys.exit(-1)
 
     def usage(self):
         print("""<!DoctypeTool> - a tool to report and amend XML 1.0 DOCTYPE declarations
 
-Syntax: doctype <options> file
+Syntax: doctype.py <options> file
 where options are:
-    -h print this message to the console
+    -h print this message to the console and exit
     -P omit public identifier
     -p <value> specify public identifier with <value>
     -q do not emit the document passed in
@@ -188,13 +191,13 @@ where options are:
     -s <value> specify system identifier with <value>""")
 
     def fatal(self, msg=''):
-        sys.stderr.write(msg)
+        sys.stderr.write('[FATAL]:' + msg)
         self.usage()
         sys.exit(-1)
 
     def parseCommandLine(self, args):
         if len(args) < 2:
-            self.fatal()
+            self.fatal('too few arguments')
 
         try:
             opts, args = getopt.getopt(args[1:], self.OPTIONS)
@@ -223,7 +226,10 @@ where options are:
         if self.omitSystem and (self.system or self.public):
             self.fatal('-S not allowed with -s or -p')
 
-        self.file = args[0] #subsequent file args ignored
+        if len(args) < 1:
+            self.fatal("file must be specified")
+        else:
+            self.file = args[0] #subsequent file args ignored
 
 if __name__ == '__main__':
     DoctypeTool()
