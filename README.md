@@ -28,7 +28,7 @@ In either case, invoke `doctype.exe` and the synopsis should appear.
 
 Syntax: doctype.py <options> file
 where options are:
-    -h print this message to the console
+    -h print this message to the console and exit
     -P omit public identifier
     -p <value> specify public identifier with <value>
     -q do not emit the document passed in
